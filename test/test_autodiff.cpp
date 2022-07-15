@@ -57,7 +57,7 @@ TEST(ForwardDiff, Subtract1)
 
 Jet operator-(const Jet& jet)
 {
-    return Jet {-jet.x, -1};
+    return Jet {-jet.x, -jet.x_prime};
 }
 
 TEST(ForwardDiff, Negate)
@@ -70,7 +70,7 @@ TEST(ForwardDiff, Negate)
 
 Jet operator*(double factor, const Jet& jet)
 {
-    return Jet {factor*jet.x, factor};
+    return Jet {factor*jet.x, factor*jet.x_prime};
 }
 
 TEST(ForwardDiff, MultiplyPositive)
@@ -150,7 +150,7 @@ TEST(ForwardDiff, DivideByJet)
 
 Jet exp(const Jet& jet)
 {
-    return Jet {std::exp(jet.x), std::exp(jet.x)};
+    return Jet {std::exp(jet.x), std::exp(jet.x)*jet.x_prime};
 }
 
 TEST(ForwardDiff, Exponential)
@@ -163,7 +163,7 @@ TEST(ForwardDiff, Exponential)
 
 Jet log(const Jet& jet)
 {
-    return Jet {std::log(jet.x), 1/jet.x};
+    return Jet {std::log(jet.x), 1/jet.x*jet.x_prime};
 }
 
 TEST(ForwardDiff, NaturalLogarithm)
@@ -172,4 +172,43 @@ TEST(ForwardDiff, NaturalLogarithm)
     Jet result = log(jet);
     ASSERT_NEAR(result.x, std::log(jet.x), 1e-6);
     ASSERT_NEAR(result.x_prime, 1.0/jet.x, 1e-6);
+}
+
+TEST(ForwardDiff, Chained1)
+{
+    Jet jet {1,1};
+    Jet result = 2*jet+1;
+    ASSERT_NEAR(result.x, 2*jet.x+1, 1e-6);
+    ASSERT_NEAR(result.x_prime, 2, 1e-6);
+}
+
+TEST(ForwardDiff, Chained2)
+{
+    Jet jet {2,1};
+    Jet result = exp(2*jet);
+    ASSERT_NEAR(result.x, std::exp(2*jet.x), 1e-6);
+    ASSERT_NEAR(result.x_prime, 2*std::exp(2*jet.x), 1e-6);
+}
+
+Jet sin(const Jet& jet)
+{
+    return Jet {std::sin(jet.x), std::cos(jet.x)*jet.x_prime};
+}
+
+TEST(ForwardDiff, Chained3)
+{
+    Jet x1 {2, 1};
+    Jet x2 {5, 0};
+    Jet result = log(x1)+x1*x2-sin(x2);
+    ASSERT_NEAR(result.x, 11.652, 1e-3);
+    ASSERT_NEAR(result.x_prime, 5.5, 1e-2);
+}
+
+TEST(ForwardDiff, Chained4)
+{
+    Jet x1 {2, 0};
+    Jet x2 {5, 1};
+    Jet result = log(x1)+x1*x2-sin(x2);
+    ASSERT_NEAR(result.x, 11.652, 1e-3);
+    ASSERT_NEAR(result.x_prime, x1.x-std::cos(x2.x), 1e-3);
 }
