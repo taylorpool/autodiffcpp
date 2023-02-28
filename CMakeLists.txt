@@ -4,6 +4,14 @@ project(AutoDiff)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+add_library(autodiff
+    INTERFACE
+)
+target_include_directories(autodiff
+    INTERFACE
+    include
+)
+
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -20,9 +28,9 @@ add_executable(
     tests
     test/test_autodiff.cpp
 )
-
 target_link_libraries(
     tests
+    autodiff
     GTest::gtest_main
 )
 

@@ -1,3 +1,5 @@
+#include "autodiff/autodiff.hpp"
+
 #include <cstdint>
 #include <gtest/gtest.h>
 
@@ -5,16 +7,7 @@
 
 template <typename T> T add1(const T &x) { return x + 1; }
 
-template <typename T> struct Jet {
-  T x;
-  T x_prime;
-};
-
-using Jetd = Jet<double>;
-
-Jetd operator+(const Jetd &jet, double increment) {
-  return Jetd{jet.x + increment, jet.x_prime};
-}
+using autodiff::Jetd;
 
 TEST(ForwardDiff, Add1) {
   Jetd jet{1, 1};
@@ -268,92 +261,4 @@ TEST(ForwardDiff, GradientDescentX4) {
     std::cout << "iteration: " << 0 << " x: " << x.x << " cost: " << cost.x
               << " gradient: " << cost.x_prime << std::endl;
   }
-}
-
-template <uint64_t N> using JetVec = Jet<double[N]>;
-
-template <uint64_t N> JetVec<N> operator+(const JetVec<N> &x, double y) {
-  JetVec<N> jet;
-  for (uint64_t index = 0; index < N; ++index) {
-    jet.x[index] = x.x[index] + y;
-    jet.x_prime[index] = x.x_prime[index];
-  }
-  return jet;
-}
-
-TEST(ForwardDiff, JetVecAddScalar) {
-  JetVec<2> vec;
-  vec.x[0] = 0.0;
-  vec.x[1] = 1.0;
-  vec.x_prime[0] = 1.0;
-  vec.x_prime[1] = 1.0;
-
-  double value = 2.0;
-
-  auto result = vec + value;
-  ASSERT_NEAR(result.x[0], vec.x[0] + value, 1e-6);
-  ASSERT_NEAR(result.x[1], vec.x[1] + value, 1e-6);
-  ASSERT_NEAR(result.x_prime[0], vec.x_prime[0], 1e-6);
-  ASSERT_NEAR(result.x_prime[1], vec.x_prime[1], 1e-6);
-}
-
-template <uint64_t N>
-JetVec<N> operator+(const JetVec<N> &x, const JetVec<N> &y) {
-  JetVec<N> jet;
-  for (uint64_t index = 0; index < N; ++index) {
-    jet.x[index] = x.x[index] + y.x[index];
-    jet.x_prime[index] = x.x_prime[index] + y.x_prime[index];
-  }
-  return jet;
-}
-
-TEST(ForwardDiff, JetVecAddJetVec) {
-  JetVec<2> a;
-  JetVec<2> b;
-  a.x[0] = 0.0;
-  a.x[1] = 1.0;
-  a.x_prime[0] = 1.0;
-  a.x_prime[1] = 1.0;
-  b.x[0] = 2.0;
-  b.x[1] = 3.0;
-  b.x_prime[0] = 1.0;
-  b.x_prime[1] = 1.0;
-
-  auto result = a + b;
-  ASSERT_NEAR(result.x[0], a.x[0] + b.x[0], 1e-6);
-  ASSERT_NEAR(result.x[1], a.x[1] + b.x[1], 1e-6);
-  ASSERT_NEAR(result.x_prime[0], a.x_prime[0] + b.x_prime[0], 1e-6);
-  ASSERT_NEAR(result.x_prime[1], a.x_prime[1] + b.x_prime[1], 1e-6);
-}
-
-template <uint64_t N>
-JetVec<N> operator*(const JetVec<N> &x, const JetVec<N> &y) {
-  JetVec<N> result;
-  for (uint64_t index = 0; index < N; ++index) {
-    result.x[index] = x.x[index] * y.x[index];
-    result.x_prime[index] =
-        x.x_prime[index] * y.x[index] + x.x[index] * y.x_prime[index];
-  }
-  return result;
-}
-
-TEST(ForwardDiff, JetVecMultiplyJetVec) {
-  JetVec<2> a;
-  JetVec<2> b;
-  a.x[0] = 0.0;
-  a.x[1] = 1.0;
-  a.x_prime[0] = 1.0;
-  a.x_prime[1] = 1.0;
-  b.x[0] = 2.0;
-  b.x[1] = 3.0;
-  b.x_prime[0] = 1.0;
-  b.x_prime[1] = 1.0;
-
-  auto result = a * b;
-  ASSERT_NEAR(result.x[0], a.x[0] * b.x[0], 1e-6);
-  ASSERT_NEAR(result.x[1], a.x[1] * b.x[1], 1e-6);
-  ASSERT_NEAR(result.x_prime[0], a.x_prime[0] * b.x[0] + a.x[0] * b.x_prime[0],
-              1e-6);
-  ASSERT_NEAR(result.x_prime[1], a.x_prime[1] * b.x[1] + a.x[1] * b.x_prime[1],
-              1e-6);
 }
