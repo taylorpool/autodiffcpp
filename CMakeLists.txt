@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.10)
 project(AutoDiff)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 20)
+
 
 add_library(autodiff
     INTERFACE
@@ -12,15 +15,13 @@ target_include_directories(autodiff
     include
 )
 
+option(BUILD_AUTODIFF_TESTS OFF)
+
+if(BUILD_AUTODIFF_TESTS)
+
 include(FetchContent)
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG release-1.12.1
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+
+find_package(GTest REQUIRED)
 
 enable_testing()
 
@@ -31,8 +32,11 @@ add_executable(
 target_link_libraries(
     tests
     autodiff
-    GTest::gtest_main
+    GTest::GTest
+    GTest::Main
 )
 
 include(GoogleTest)
 gtest_discover_tests(tests)
+
+endif()

@@ -25,10 +25,6 @@ TEST(ForwardDiff, Add2) {
   ASSERT_NEAR(result.x, jet.x + 2, 1e-6);
 }
 
-Jetd operator-(const Jetd &jet, double x) {
-  return Jetd{jet.x - x, jet.x_prime};
-}
-
 TEST(ForwardDiff, Subtract1) {
   Jetd jet{1, 1};
   double subtraction = 1;
@@ -37,17 +33,11 @@ TEST(ForwardDiff, Subtract1) {
   ASSERT_NEAR(result.x_prime, 1, 1e-6);
 }
 
-Jetd operator-(const Jetd &jet) { return Jetd{-jet.x, -jet.x_prime}; }
-
 TEST(ForwardDiff, Negate) {
   Jetd jet{1, 1};
   Jetd result = -jet;
   ASSERT_NEAR(result.x, -jet.x, 1e-6);
   ASSERT_NEAR(result.x_prime, -1, 1e-6);
-}
-
-Jetd operator*(double factor, const Jetd &jet) {
-  return Jetd{factor * jet.x, factor * jet.x_prime};
 }
 
 TEST(ForwardDiff, MultiplyPositive) {
@@ -66,19 +56,11 @@ TEST(ForwardDiff, MultiplyNegative) {
   ASSERT_NEAR(result.x_prime, factor, 1e-6);
 }
 
-Jetd operator+(const Jetd &left, const Jetd &right) {
-  return {left.x + right.x, left.x_prime + right.x_prime};
-}
-
 TEST(ForwardDiff, AddToItself) {
   Jetd jet{1, 1};
   Jetd result = jet + jet;
   ASSERT_NEAR(result.x, jet.x + jet.x, 1e-6);
   ASSERT_NEAR(result.x_prime, jet.x_prime + jet.x_prime, 1e-6);
-}
-
-Jetd operator-(const Jetd &left, const Jetd &right) {
-  return Jetd{left.x - right.x, left.x_prime - right.x_prime};
 }
 
 TEST(ForwardDiff, SubtractFromItself) {
@@ -87,11 +69,6 @@ TEST(ForwardDiff, SubtractFromItself) {
   Jetd result = jet1 - jet2;
   ASSERT_NEAR(result.x, jet1.x - jet2.x, 1e-6);
   ASSERT_NEAR(result.x_prime, jet1.x_prime - jet2.x_prime, 1e-6);
-}
-
-Jetd operator*(const Jetd &left, const Jetd &right) {
-  return Jetd{left.x * right.x,
-              left.x * right.x_prime + left.x_prime * right.x};
 }
 
 TEST(ForwardDiff, MultiplyByJetd) {
@@ -103,10 +80,6 @@ TEST(ForwardDiff, MultiplyByJetd) {
               1e-6);
 }
 
-Jetd operator/(const Jetd &high, const Jetd &low) {
-  return Jetd{high.x / low.x,
-              (low.x * high.x_prime - high.x * low.x_prime) / (low.x * low.x)};
-}
 TEST(ForwardDiff, DivideByJetd) {
   Jetd jet1{1, 2};
   Jetd jet2{3, 4};
@@ -118,10 +91,6 @@ TEST(ForwardDiff, DivideByJetd) {
               1e-6);
 }
 
-Jetd exp(const Jetd &jet) {
-  return Jetd{std::exp(jet.x), std::exp(jet.x) * jet.x_prime};
-}
-
 TEST(ForwardDiff, Exponential) {
   Jetd jet{1, 1};
   Jetd result = exp(jet);
@@ -129,19 +98,11 @@ TEST(ForwardDiff, Exponential) {
   ASSERT_NEAR(result.x_prime, std::exp(jet.x), 1e-6);
 }
 
-Jetd log(const Jetd &jet) {
-  return Jetd{std::log(jet.x), 1 / jet.x * jet.x_prime};
-}
-
 TEST(ForwardDiff, NaturalLogarithm) {
   Jetd jet{1, 1};
   Jetd result = log(jet);
   ASSERT_NEAR(result.x, std::log(jet.x), 1e-6);
   ASSERT_NEAR(result.x_prime, 1.0 / jet.x, 1e-6);
-}
-
-Jetd sin(const Jetd &jet) {
-  return Jetd{std::sin(jet.x), std::cos(jet.x) * jet.x_prime};
 }
 
 TEST(ForwardDiff, Sin0) {
@@ -158,10 +119,6 @@ TEST(ForwardDiff, SinPI) {
   ASSERT_NEAR(result.x_prime, std::cos(jet.x), 1e-6);
 }
 
-Jetd cos(const Jetd &jet) {
-  return Jetd{std::cos(jet.x), -std::sin(jet.x) * jet.x_prime};
-}
-
 TEST(ForwardDiff, Cos0) {
   Jetd jet{0, 1};
   auto result = cos(jet);
@@ -174,11 +131,6 @@ TEST(ForwardDiff, CosPI) {
   auto result = cos(jet);
   ASSERT_NEAR(result.x, std::cos(jet.x), 1e-6);
   ASSERT_NEAR(result.x_prime, -std::sin(jet.x), 1e-6);
-}
-
-Jetd tan(const Jetd &jet) {
-  auto cosX = std::cos(jet.x);
-  return Jetd{std::tan(jet.x), 1.0 / (cosX * cosX) * jet.x_prime};
 }
 
 TEST(ForwardDiff, Tan0) {
@@ -225,40 +177,36 @@ TEST(ForwardDiff, Chained4) {
   ASSERT_NEAR(result.x_prime, x1.x * 1.0 - std::cos(x2.x), 1e-2);
 }
 
-Jetd pow(const Jetd &base, double exponent) {
-  return Jetd{std::pow(base.x, exponent),
-              exponent * std::pow(base.x, exponent - 1) * base.x_prime};
+TEST(ForwardDiff, NewtonX_PowerOf2) {
+  const auto costFunction = [](const Jetd &val) { return pow(val, 2); };
+  autodiff::NewtonParams params;
+  params.maximumIterations = 50;
+  params.tolerance = 1e-14;
+  const double x0 = 10.0;
+  const auto result = autodiff::newton<double>(costFunction, x0, params);
+  ASSERT_NEAR(result.x, 0.0, 1e-4);
+  ASSERT_NEAR(result.y, 0.0, 1e-4);
 }
 
-Jetd operator^(const Jetd &base, double exponent) {
-  return Jetd{std::pow(base.x, exponent),
-              exponent * std::pow(base.x, exponent - 1) * base.x_prime};
+TEST(ForwardDiff, NewtonPowerOf4) {
+  const auto costFunction = [](const Jetd &val) { return pow(val, 4); };
+  autodiff::NewtonParams params;
+  params.maximumIterations = 50;
+  params.tolerance = 1e-14;
+  const double x0 = 10.0;
+  const auto result = autodiff::newton<double>(costFunction, x0, params);
+  ASSERT_NEAR(result.x, 0.0, 1e-3);
+  ASSERT_NEAR(result.y, 0.0, 1e-3);
 }
 
-void operator-=(Jetd &x, double y) { x.x -= y; }
+Jetd my_cost_function(const Jetd &x) { return x * x; }
 
-TEST(ForwardDiff, GradientDescentX2) {
-  Jetd x{10.0, 1.0};
-  auto costFunction = [](const Jetd &val) { return pow(val, 2); };
-  auto cost = costFunction(x);
-  for (int index = 0; index < 10; ++index) {
-    x -= 0.5 * cost.x_prime;
-    cost = costFunction(x);
-    std::cout << "iteration: " << index << " x: " << x.x << " cost: " << cost.x
-              << std::endl;
-  }
-}
-
-TEST(ForwardDiff, GradientDescentX4) {
-  Jetd x{10.0, 1.0};
-  auto costFunction = [](const Jetd &val) { return pow(val, 4); };
-  auto cost = costFunction(x);
-  std::cout << "iteration: " << 0 << " x: " << x.x << " cost: " << cost.x
-            << " gradient: " << cost.x_prime << std::endl;
-  for (int index = 0; index < 10; ++index) {
-    x -= 1e-3 * cost.x_prime;
-    cost = costFunction(x);
-    std::cout << "iteration: " << 0 << " x: " << x.x << " cost: " << cost.x
-              << " gradient: " << cost.x_prime << std::endl;
-  }
+TEST(Newton, x_Squared) {
+  const double x0 = 10.0;
+  autodiff::NewtonParams params;
+  params.maximumIterations = 50;
+  params.tolerance = 1e-14;
+  auto result = autodiff::newton<double>(my_cost_function, x0, params);
+  ASSERT_NEAR(result.x, 0.0, 1e-4);
+  ASSERT_NEAR(result.y, 0.0, 1e-4);
 }
