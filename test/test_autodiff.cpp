@@ -179,22 +179,22 @@ TEST(ForwardDiff, Chained4) {
 
 TEST(ForwardDiff, NewtonX_PowerOf2) {
   const auto costFunction = [](const Jetd &val) { return pow(val, 2); };
-  autodiff::NewtonParams params;
+  root_finding::NewtonParams params;
   params.maximumIterations = 50;
   params.tolerance = 1e-14;
   const double x0 = 10.0;
-  const auto result = autodiff::newton<double>(costFunction, x0, params);
+  const auto result = root_finding::newton(costFunction, x0, params);
   ASSERT_NEAR(result.x, 0.0, 1e-4);
   ASSERT_NEAR(result.y, 0.0, 1e-4);
 }
 
 TEST(ForwardDiff, NewtonPowerOf4) {
   const auto costFunction = [](const Jetd &val) { return pow(val, 4); };
-  autodiff::NewtonParams params;
+  root_finding::NewtonParams params;
   params.maximumIterations = 50;
   params.tolerance = 1e-14;
   const double x0 = 10.0;
-  const auto result = autodiff::newton<double>(costFunction, x0, params);
+  const auto result = root_finding::newton(costFunction, x0, params);
   ASSERT_NEAR(result.x, 0.0, 1e-3);
   ASSERT_NEAR(result.y, 0.0, 1e-3);
 }
@@ -203,10 +203,10 @@ Jetd my_cost_function(const Jetd &x) { return x * x; }
 
 TEST(Newton, x_Squared) {
   const double x0 = 10.0;
-  autodiff::NewtonParams params;
+  root_finding::NewtonParams params;
   params.maximumIterations = 50;
   params.tolerance = 1e-14;
-  auto result = autodiff::newton<double>(my_cost_function, x0, params);
+  auto result = root_finding::newton(my_cost_function, x0, params);
   ASSERT_NEAR(result.x, 0.0, 1e-4);
   ASSERT_NEAR(result.y, 0.0, 1e-4);
 }
