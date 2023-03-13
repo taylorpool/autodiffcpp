@@ -127,17 +127,14 @@ newton(const std::function<autodiff::Jetd(const autodiff::Jetd &)> &f,
   jet.x = x0;
   jet.x_prime = 1.0;
   auto value = f(jet);
-  for (uint64_t iteration = 0; iteration < params.maximumIterations;
-       ++iteration) {
-    if (std::abs(value.x) < params.tolerance) [[unlikely]] {
-      break;
-    } else [[likely]] {
-      jet.x -= value.x / value.x_prime;
-      value = f(jet);
-    }
-  }
   OptimizationResult result;
   result.numIterations = 0;
+  while (result.numIterations < params.maximumIterations &&
+         std::abs(value.x) > params.tolerance) {
+    jet.x -= value.x / value.x_prime;
+    value = f(jet);
+    ++result.numIterations;
+  }
   result.x = jet.x;
   result.y = value.x;
   return result;
