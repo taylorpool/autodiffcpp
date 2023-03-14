@@ -177,22 +177,22 @@ TEST(ForwardDiff, Chained4) {
   ASSERT_NEAR(result.x_prime, x1.x * 1.0 - std::cos(x2.x), 1e-2);
 }
 
-TEST(ForwardDiff, NewtonX_PowerOf2) {
+TEST(Newton, NewtonX_PowerOf2) {
   const auto costFunction = [](const Jetd &val) { return pow(val, 2); };
   root_finding::NewtonParams params;
   params.maximumIterations = 50;
-  params.tolerance = 1e-14;
+  params.absoluteTolerance = 1e-14;
   const double x0 = 10.0;
   const auto result = root_finding::newton(costFunction, x0, params);
   ASSERT_NEAR(result.x, 0.0, 1e-4);
   ASSERT_NEAR(result.y, 0.0, 1e-4);
 }
 
-TEST(ForwardDiff, NewtonPowerOf4) {
+TEST(Newton, NewtonPowerOf4) {
   const auto costFunction = [](const Jetd &val) { return pow(val, 4); };
   root_finding::NewtonParams params;
   params.maximumIterations = 50;
-  params.tolerance = 1e-14;
+  params.absoluteTolerance = 1e-14;
   const double x0 = 10.0;
   const auto result = root_finding::newton(costFunction, x0, params);
   ASSERT_NEAR(result.x, 0.0, 1e-3);
@@ -205,8 +205,22 @@ TEST(Newton, x_Squared) {
   const double x0 = 10.0;
   root_finding::NewtonParams params;
   params.maximumIterations = 50;
-  params.tolerance = 1e-14;
+  params.absoluteTolerance = 1e-14;
   auto result = root_finding::newton(my_cost_function, x0, params);
   ASSERT_NEAR(result.x, 0.0, 1e-4);
   ASSERT_NEAR(result.y, 0.0, 1e-4);
+}
+
+TEST(Newton, ax_b) {
+  const double x0 = 10.0;
+  root_finding::NewtonParams params;
+  params.maximumIterations = 50;
+  params.absoluteTolerance = 1e-14;
+  const double a = 2.0;
+  const double b = -5.0;
+  auto result = root_finding::newton(
+      [&a, &b](const autodiff::Jetd &x) { return a * x + b; }, x0, params);
+  ASSERT_EQ(result.numIterations, 1);
+  ASSERT_NEAR(result.x, -b / a, 1e-14);
+  ASSERT_NEAR(result.y, 0.0, 1e-14);
 }

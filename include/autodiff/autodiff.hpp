@@ -102,7 +102,7 @@ constexpr Jetd tan(const Jetd &jet) {
 
 constexpr Jetd pow(const Jetd &base, double exponent) {
   return Jetd{std::pow(base.x, exponent),
-              exponent * std::pow(base.x, exponent - 1) * base.x_prime};
+              exponent * std::pow(base.x, exponent - 1.0) * base.x_prime};
 }
 
 } // namespace autodiff
@@ -111,7 +111,7 @@ namespace root_finding {
 
 struct NewtonParams {
   uint64_t maximumIterations;
-  double tolerance;
+  double absoluteTolerance;
 };
 
 struct OptimizationResult {
@@ -123,14 +123,12 @@ struct OptimizationResult {
 constexpr OptimizationResult
 newton(const std::function<autodiff::Jetd(const autodiff::Jetd &)> &f,
        const double &x0, const NewtonParams &params) {
-  autodiff::Jetd jet;
-  jet.x = x0;
-  jet.x_prime = 1.0;
+  autodiff::Jetd jet{x0, 1.0};
   auto value = f(jet);
   OptimizationResult result;
   result.numIterations = 0;
   while (result.numIterations < params.maximumIterations &&
-         std::abs(value.x) > params.tolerance) {
+         std::abs(value.x) > params.absoluteTolerance) {
     jet.x -= value.x / value.x_prime;
     value = f(jet);
     ++result.numIterations;
