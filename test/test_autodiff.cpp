@@ -7,7 +7,7 @@
 
 template <typename T> T add1(const T &x) { return x + 1; }
 
-using autodiff::Jetd;
+using autodiff::forward_mode::Jetd;
 
 TEST(ForwardDiff, Add1) {
   Jetd jet{1, 1};
@@ -219,7 +219,7 @@ TEST(Newton, ax_b) {
   const double a = 2.0;
   const double b = -5.0;
   auto result = root_finding::newton(
-      [&a, &b](const autodiff::Jetd &x) { return a * x + b; }, x0, params);
+      [&a, &b](const Jetd &x) { return a * x + b; }, x0, params);
   ASSERT_EQ(result.numIterations, 1);
   ASSERT_NEAR(result.x, -b / a, 1e-14);
   ASSERT_NEAR(result.y, 0.0, 1e-14);

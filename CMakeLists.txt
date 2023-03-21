@@ -25,12 +25,10 @@ find_package(GTest REQUIRED)
 
 enable_testing()
 
-add_executable(
-    tests
+add_executable(tests
     test/test_autodiff.cpp
 )
-target_link_libraries(
-    tests
+target_link_libraries(tests
     autodiff
     GTest::GTest
     GTest::Main
